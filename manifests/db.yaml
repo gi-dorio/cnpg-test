@@ -4,7 +4,7 @@ apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
   labels:
-    helm.sh/chart: cnpg-cluster-3.1.1
+    helm.sh/chart: cnpg-cluster-2.1.6
   name: myproject-db-devel
   namespace: default
 spec:

@@ -1,0 +1,136 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: multi-cluster-helm-charts
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          - git:
+              repoURL: git@git.elmec.com:Dorio/argotest.git
+              revision: main
+              files:
+                - path: "*/*/metadata.yaml"
+  template:
+    metadata:
+      name: '{{.path.basename}}'
+      labels:
+        cluster: '{{.path.basename}}'
+        project: '{{index .path.segments 0}}'
+    spec:
+      project: '{{index .path.segments 0}}'
+  templatePatch: |
+    spec:
+      sources:
+        {{ if .hasChart }}
+        - repoURL: '{{.repoUrl}}'
+          chart: '{{.chart}}'
+          targetRevision: '{{.version}}'
+          helm:
+            valueFiles:
+              - $values/{{.path.path}}/values.yaml
+        - repoURL: git@git.elmec.com:Dorio/argotest.git
+          targetRevision: main
+          ref: values
+        {{- end }}
+        {{ if .hasManifests }}
+        - repoURL: git@git.elmec.com:Dorio/argotest.git
+          targetRevision: main
+          path: '{{.path.path}}/manifests'
+        {{- end }}
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{.namespace}}'
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: multi-cluster-helm-charts
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          - git:
+              repoURL: git@forge.ancientglade.com/Homelab/argo-applications.git
+              revision: main
+              files:
+                - path: "*/*/metadata.yaml"
+          - git:
+              repoURL: git@forge.ancientglade.com/Homelab/argo-applications.git
+              revision: main
+              files:
+                - path: "{{index .path.segments 0}}/{{index .path.segments 1}}/values.yaml"
+  template:
+    metadata:
+      name: '{{.path.basename}}'
+      labels:
+        cluster: '{{.path.basename}}'
+        project: '{{index .path.segments 0}}'
+    spec:
+      project: '{{index .path.segments 0}}'
+      sources:
+        - repoURL: '{{.repoUrl}}'
+          chart: '{{.chart}}'
+          targetRevision: '{{.version}}'
+          helm:
+            valueFiles:
+              - $values/{{.path.path}}/values.yaml
+        - repoURL: git@forge.ancientglade.com/Homelab/argo-applications.git
+          targetRevision: main
+          ref: values
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{.namespace}}'
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: multi-cluster-additional-manifests
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          - git:
+              repoURL: git@forge.ancientglade.com/Homelab/argo-applications.git
+              revision: main
+              directories:
+                - path: "*/*/manifests"
+          - git:
+              repoURL: git@forge.ancientglade.com/Homelab/argo-applications.git
+              revision: main
+              files:
+                - path: "{{index .path.segments 0}}/{{index .path.segments 1}}/metadata.yaml"
+  template:
+    metadata:
+      name: '{{index .path.segments 1}}-manifests'
+      labels:
+        cluster: '{{index .path.segments 1}}'
+        project: '{{index .path.segments 0}}'
+        type: additional-manifests
+    spec:
+      project: '{{index .path.segments 0}}'
+      source:
+        repoURL: git@forge.ancientglade.com/Homelab/argo-applications.git
+        targetRevision: main
+        path: '{{.path.path}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{.namespace}}'
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true

@@ -1,0 +1,6 @@
+repoUrl: ""
+chart: ""
+version: ""
+namespace: test
+hasChart: false
+hasManifests: true

@@ -2,3 +2,5 @@ repoUrl: ""
 chart: ""
 version: ""
 namespace: test
+hasChart: true
+hasManifests: true

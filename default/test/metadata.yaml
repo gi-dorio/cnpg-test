@@ -1,5 +1,3 @@
-hasChart: false
-hasManifests: true
 repoUrl: ""
 chart: ""
 version: ""
